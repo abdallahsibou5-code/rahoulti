@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rahoulti – رياضتي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff0f8;--card:#fff;--tx:#5a1038;--ac:#ff1493;--ac2:#ff69b4;--soft:#ffe0f0;--on:#fff;--r:26px;--bd:2px dashed #ff9ccb;--sh:#c2105f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a1224;--card:#3a1a31;--tx:#ffe3f2;--soft:#52244a}}
+:root[data-theme="dark"]{--bg:#2a1224;--card:#3a1a31;--tx:#ffe3f2;--soft:#52244a}
+:root[data-g="boy"][data-g="boy"][data-g="boy"]{--bg:#0b1020;--card:#141b34;--tx:#eaf2ff;--ac:#00e5ff;--ac2:#3b82f6;--soft:#1d2748;--on:#04101c;--r:12px;--bd:1px solid #2a3a6e;--sh:#0a6c85}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:560px;font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding:12px 14px calc(96px + env(safe-area-inset-bottom,0px));line-height:1.6}
+h2{margin:0 0 6px;font-size:20px}
+.c{background:var(--card);border:var(--bd);border-radius:var(--r);padding:16px;margin:0 0 14px;box-shadow:0 5px 0 var(--sh)}
+.b{background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--on);border:0;border-radius:99px;padding:12px 22px;font:800 16px Cairo,sans-serif;box-shadow:0 5px 0 var(--sh);cursor:pointer;margin-bottom:6px}
+.b:active{transform:translateY(4px);box-shadow:0 1px 0 var(--sh)}
+.b.s{padding:8px 16px;font-size:14px}
+input,select{width:100%;padding:12px;border-radius:calc(var(--r)*.7);border:2px solid var(--ac2);background:var(--soft);color:var(--tx);font:700 16px Cairo,sans-serif;margin:4px 0 10px}
+label{font-weight:700;font-size:14px}
+.hero{display:flex;align-items:center;gap:12px}
+.m{font-size:64px;animation:bn 1s ease-in-out infinite alternate;cursor:pointer}
+@keyframes bn{to{transform:translateY(-10px)}}
+.big{font-size:44px;font-weight:800;color:var(--ac);line-height:1.1}
+.bar{height:16px;border-radius:99px;background:var(--soft);overflow:hidden;margin:2px 0 8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dotted var(--ac2)}
+.row:last-child{border:0}
+.pill{background:var(--soft);border-radius:99px;padding:2px 12px;font-size:13px;font-weight:800;color:var(--ac)}
+.today{outline:3px solid var(--ac)}
+.err{color:#e11d48;font-weight:700;min-height:22px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:var(--card);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));border-radius:var(--r) var(--r) 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.18);z-index:5}
+nav button{background:none;border:0;color:var(--tx);font:700 11px Cairo,sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.7;cursor:pointer}
+nav button span{font-size:22px;width:46px;height:46px;border-radius:50%;background:var(--soft);display:grid;place-items:center}
+nav button.on{opacity:1;color:var(--ac)}
+nav button.on span{background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 4px 0 var(--sh)}
+#toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;z-index:9;background:linear-gradient(135deg,var(--ac),var(--ac2));color:var(--on);padding:14px;border-radius:var(--r);font-weight:800;text-align:center;display:none;box-shadow:0 5px 0 var(--sh)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app"></div>
+<script>
+var $=function(s){return document.querySelector(s)};
+var S={};try{S=JSON.parse(localStorage.getItem('rh')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('rh',JSON.stringify(S))}catch(e){}}
+function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML}
+var tab=0,DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+function theme(g){document.documentElement.dataset.g=g}
+function boy(){return S.p&&S.p.g=='boy'}
+
+function calc(p){
+  var m=p.h/100,bmi=p.w/(m*m),minor=p.a<18,note='';
+  var bmr=10*p.w+6.25*p.h-5*p.a+(p.g=='boy'?5:-161),tdee=bmr*p.act,t=tdee;
+  if(p.goal=='gain'){t=tdee+(minor?250:400);if(minor)note='أنت ما زلت تكبر، فالأرقام تقريبية. وزنك يزيد مع الطول والعضلات 🌱'}
+  else if(p.goal=='lose'){
+    if(minor)note='في عمرك ما نخفّض السعرات لأن جسمك ما زال يكبر. هدفك: أكل صحي وحركة، ويثبت وزنك بينما تطول. تكلّم أهلك أو الطبيب قبل أي نظام للنزول 🩺';
+    else t=Math.max(tdee-450,p.g=='boy'?1500:1200)}
+  t=Math.round(t/10)*10;
+  var pr=Math.round(p.w*(p.goal=='lose'&&!minor?1.8:1.4)),fat=Math.round(t*.27/9),carb=Math.max(0,Math.round((t-pr*4-fat*9)/4));
+  var st=minor?'للأعمار الصغيرة يحدده الطبيب بمنحنيات النمو':bmi<18.5?'نحافة':bmi<25?'وزن طبيعي':bmi<30?'وزن زائد':'سمنة';
+  return{bmi:bmi,t:t,tdee:Math.round(tdee),pr:pr,fat:fat,carb:carb,st:st,note:note}}
+
+var F={
+gain:[['🥣 الفطور',.22,'بيض + خبز + جبن + كأس حليب + موزة'],['🥜 سناك',.1,'مكسرات + تمر'],['🍛 الغداء',.28,'رز أو معكرونة + دجاج أو لحم + زيت زيتون + خضار'],['🥪 سناك العصر',.12,'ساندويتش زبدة فول سوداني + عصير'],['🍳 العشاء',.2,'تونة أو بيض + خبز + أفوكادو'],['🥛 قبل النوم',.08,'حليب دافئ + عسل']],
+lose:[['🥣 الفطور',.25,'شوفان بالحليب + فاكهة، أو بيضتان + خبز أسمر'],['🍎 سناك',.1,'فاكهة أو زبادي'],['🍗 الغداء',.3,'صدر دجاج أو سمك مشوي + خضار + ربع طبق رز'],['🥕 سناك العصر',.1,'خيار وجزر + حمص'],['🥗 العشاء',.25,'سلطة + بيض أو تونة + خبز أسمر']]};
+var W={
+home:[['جسم علوي','ضغط (على الركبتين للمبتدئ) 3×10 • ديبس على كرسي 3×10 • بلانك 3×30ث • سوبرمان 3×12'],['ساقين','سكوات 4×12 • لانج 3×10 لكل رجل • جسر الورك 3×15 • رفع الكعبين 3×20'],['راحة + مشي','مشي 30 دقيقة وتمدد خفيف'],['جسم كامل','بيربي مبسط 3×8 • تسلق الجبل 3×20 • سكوات 3×12 • ضغط 3×8'],['بطن وجذع','كرانش 3×15 • دراجة هوائية 3×20 • بلانك جانبي 3×20ث • رفع الساقين 3×12'],['نشاط خفيف','مشي أو دراجة 30-40 دقيقة'],['راحة تامة','نوم كافي وماء وأكل جيد']],
+gym:[['صدر وترايسبس','بنش بريس 4×10 • ضغط دمبل مائل 3×10 • تفتيح دمبل 3×12 • ترايسبس كيبل 3×12'],['ظهر وبايسبس','لات بول داون 4×10 • تجديف كيبل 3×10 • كيرل دمبل 3×12 • فيس بول 3×15'],['ساقين','سكوات 4×10 • ليج بريس 3×12 • رومانيان 3×10 • سمانة 4×15'],['راحة + مشي','مشي 30 دقيقة وتمدد'],['أكتاف وبطن','ضغط أكتاف دمبل 4×10 • رفع جانبي 3×12 • بلانك 3×40ث • كرانش كيبل 3×15'],['جسم كامل خفيف','ديدلفت خفيف 3×8 • سكوات كأس 3×12 • تجديف 3×12'],['راحة تامة','نوم كافي وماء وأكل جيد']]};
+var cardio=' + كارديو 20 دقيقة (مشي سريع أو حبل)';
+function plan(i){var d=W[S.p.place][i],r=d[0].indexOf('راحة')==0||d[0]=='نشاط خفيف';return[d[0],d[1]+(S.p.goal=='lose'&&!r?cardio:'')]}
+
+var REM=[['bf','🥣 الفطور','07:00'],['sn','🍎 السناك','10:30'],['lu','🍛 الغداء','13:00'],['wa','💧 شرب الماء','15:00'],['wo','💪 التمرين','17:30'],['di','🍽️ العشاء','19:30']];
+
+function toast(t){var e=$('#toast');e.textContent=t;e.style.display='block';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(x){}setTimeout(function(){e.style.display='none'},6000)}
+function tick(){
+  if(!S.p||!S.rem)return;var n=new Date(),hm=('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2),k=n.toDateString();
+  REM.forEach(function(r){var c=S.rem[r[0]];if(c&&c.on&&c.t==hm&&c.last!=k){c.last=k;save();
+    var msg=r[1]+' — '+(boy()?'يلا يا بطل ':'يلا يا بطلة ')+S.p.name+' 💖';toast(msg);
+    try{if(window.Notification&&Notification.permission=='granted')new Notification('Rahoulti',{body:msg})}catch(x){}}})}
+setInterval(tick,15000);
+
+function form(){
+  var p=S.p||{g:'girl',goal:'gain',place:'home',act:1.375};theme(p.g);
+  var o=function(v,l,c){return'<option value="'+v+'"'+(String(c)==String(v)?' selected':'')+'>'+l+'</option>'};
+  $('#app').innerHTML='<div class="c"><div class="hero"><div class="m">'+(p.g=='boy'?'🦁':'🐱')+'</div><div><h2>أهلا بك في Rahoulti</h2><div>املأ بياناتك لنبني لك برنامجك</div></div></div></div><div class="c">'+
+  '<label>اسمك</label><input id="n" value="'+esc(p.name||'')+'" maxlength="20">'+
+  '<label>أنت</label><select id="g" onchange="theme(this.value)">'+o('girl','بنت 🎀',p.g)+o('boy','ولد 💪',p.g)+'</select>'+
+  '<label>العمر (سنة)</label><input id="a" type="number" inputmode="numeric" value="'+(p.a||'')+'">'+
+  '<label>الطول (سم)</label><input id="h" type="number" inputmode="decimal" value="'+(p.h||'')+'">'+
+  '<label>الوزن (كغ)</label><input id="w" type="number" inputmode="decimal" value="'+(p.w||'')+'">'+
+  '<label>هدفك</label><select id="go">'+o('gain','زيادة الوزن 📈',p.goal)+o('lose','إنقاص الوزن 📉',p.goal)+o('keep','تثبيت الوزن ⚖️',p.goal)+'</select>'+
+  '<label>مكان التمرين</label><select id="pl">'+o('home','المنزل 🏠',p.place)+o('gym','الصالة الرياضية 🏋️',p.place)+'</select>'+
+  '<label>نشاطك اليومي</label><select id="ac">'+o(1.2,'قليل (جلوس أغلب اليوم)',p.act)+o(1.375,'خفيف (مدرسة + مشي)',p.act)+o(1.55,'متوسط (رياضة منتظمة)',p.act)+'</select>'+
+  '<div class="err" id="er"></div><button class="b" onclick="start()">ابدأ 🚀</button></div>'}
+
+function start(){
+  var v=function(i){return $('#'+i).value},n=v('n').trim(),a=+v('a'),h=+v('h'),w=+v('w'),er=$('#er');
+  if(!n)return er.textContent='اكتب اسمك';
+  if(!(a>=8&&a<=80))return er.textContent='تأكد من العمر';
+  if(!(h>=100&&h<=220))return er.textContent='الطول بالسنتيمتر (مثلا 160)';
+  if(!(w>=20&&w<=200))return er.textContent='تأكد من الوزن بالكيلو';
+  S.p={name:n,g:v('g'),a:a,h:h,w:w,goal:v('go'),place:v('pl'),act:+v('ac')};
+  if(!S.rem){S.rem={};REM.forEach(function(r){S.rem[r[0]]={on:true,t:r[2]}})}
+  save();tab=0;render()}
+
+function cheer(){toast((boy()?['يلا يا بطل! 💪','أنت قوي 🔥','كل يوم أقوى 🦁','لا تستسلم 🏆']:['يلا يا بطلة! 🎀','أنتِ رائعة 💖','القطة فخورة بك 😽','خطوة خطوة 🐾'])[Math.floor(Math.random()*4)])}
+
+function vToday(){
+  var p=S.p,r=calc(p),d=plan(new Date().getDay()),gl={gain:'زيادة الوزن',lose:'إنقاص الوزن',keep:'تثبيت الوزن'}[p.goal];
+  var pc=function(l,g,k){return'<div>'+l+' <b>'+g+' غ</b></div><div class="bar"><i style="width:'+Math.min(100,g*k/r.t*100)+'%"></i></div>'};
+  return'<div class="c"><div class="hero"><div class="m" onclick="cheer()">'+(boy()?'🦁':'🐱')+'</div><div><h2>'+(boy()?'أهلا ':'أهلا يا ')+esc(p.name)+(boy()?' 🔥':' 🎀')+'</h2><div>هدفك: <span class="pill">'+gl+'</span></div></div></div></div>'+
+  '<div class="c"><div>سعراتك اليومية</div><div class="big">'+r.t+' <small style="font-size:16px">سعرة</small></div><div>احتراقك مع نشاطك تقريبا: '+r.tdee+' سعرة</div>'+
+  '<div style="margin-top:10px">'+pc('🥩 بروتين',r.pr,4)+pc('🍚 كربوهيدرات',r.carb,4)+pc('🥑 دهون',r.fat,9)+'</div>'+(r.note?'<div class="pill" style="display:block;border-radius:16px;padding:10px;margin-top:8px">'+r.note+'</div>':'')+'</div>'+
+  '<div class="c"><h2>📏 جسمك</h2><div class="row"><span>مؤشر كتلة الجسم BMI</span><b>'+r.bmi.toFixed(1)+'</b></div><div class="row"><span>التقييم</span><b>'+r.st+'</b></div><div class="row"><span>الطول / الوزن</span><b>'+p.h+' سم / '+p.w+' كغ</b></div></div>'+
+  '<div class="c today"><h2>💪 تمرين اليوم ('+DAYS[new Date().getDay()]+')</h2><b>'+d[0]+'</b><div>'+d[1]+'</div></div>'+
+  '<button class="b s" onclick="S.p.w=+prompt(\'وزنك الجديد بالكيلو\',S.p.w)||S.p.w;save();render()">⚖️ تحديث الوزن</button> <button class="b s" onclick="form()">✏️ تعديل بياناتي</button> <button class="b s" onclick="share()">🔗 شارك التطبيق</button>'}
+
+function vFood(){
+  var p=S.p,r=calc(p),L=F[p.goal=='gain'?'gain':'lose'],k=new Date().toDateString();S.d=S.d||{};
+  var h='<div class="c"><h2>🍽️ نظامك الغذائي</h2><div>'+(p.goal=='gain'?'6 وجبات صغيرة بسعرات أعلى لزيادة صحية':p.goal=='lose'&&p.a>=18?'وجبات خفيفة مشبعة بسعرات أقل':'وجبات متوازنة بحجم معتدل')+' — المجموع '+r.t+' سعرة</div></div>';
+  L.forEach(function(m,i){var id=k+i,on=S.d[id];h+='<div class="c"><div class="row" style="border:0"><h2>'+m[0]+'</h2><span class="pill">'+Math.round(r.t*m[1]/10)*10+' سعرة</span></div><div>'+m[2]+'</div><label><input type="checkbox" style="width:auto;margin:6px 0 0 6px" '+(on?'checked':'')+' onchange="S.d[\''+id+'\']=this.checked;save();if(this.checked)cheer()">أكلتها ✅</label></div>'});
+  return h+'<div class="c"><h2>💡 نصائح</h2><div>• اشرب 8 كاسات ماء 💧<br>• نم '+(p.a<18?'9':'8')+' ساعات 😴<br>• لا تتخطّ الوجبات<br>• الأرقام تقريبية، وللتفاصيل استشر طبيبا أو أخصائي تغذية</div></div>'}
+
+function vWork(){
+  var p=S.p,td=new Date().getDay(),h='<div class="c"><h2>'+(p.place=='gym'?'🏋️ برنامج الصالة':'🏠 برنامج المنزل')+'</h2><div>إحماء 5 دقائق • راحة 60-90 ثانية بين المجموعات • تهدئة 3 دقائق</div>'+(p.place=='gym'&&p.a<18?'<div class="pill" style="display:block;border-radius:16px;padding:8px;margin-top:8px">في الصالة استخدم أوزانا خفيفة وتمرّن مع مدرب أو شخص كبير 🙏</div>':'')+'</div>';
+  for(var i=0;i<7;i++){var d=plan(i);h+='<div class="c'+(i==td?' today':'')+'"><div class="row" style="border:0"><h2>'+DAYS[i]+'</h2>'+(i==td?'<span class="pill">اليوم ⭐</span>':'')+'</div><b>'+d[0]+'</b><div>'+d[1]+'</div></div>'}
+  return h}
+
+function vRem(){
+  var h='<div class="c"><h2>⏰ تنبيهاتي</h2><div>اختر الوقت المناسب لك لكل تنبيه 👇</div></div>';
+  REM.forEach(function(r){var c=S.rem[r[0]];h+='<div class="c"><div class="row" style="border:0"><h2>'+r[1]+'</h2><input type="checkbox" style="width:26px;margin:0" '+(c.on?'checked':'')+' onchange="S.rem.'+r[0]+'.on=this.checked;save()"></div><input type="time" value="'+c.t+'" onchange="S.rem.'+r[0]+'.t=this.value;S.rem.'+r[0]+'.last=\'\';save()"></div>'});
+  return h+'<div class="c"><button class="b s" onclick="perm()">🔔 السماح بالإشعارات</button><button class="b s" onclick="toast(\'هكذا يظهر التنبيه 💖\')">جرّب تنبيها</button><div style="font-size:13px;margin-top:6px">التنبيهات تعمل والصفحة مفتوحة في المتصفح (أو بعد إضافتها لشاشة الهاتف الرئيسية). لتنبيهات تعمل والتطبيق مغلق تماما نحتاج تطبيق أندرويد.</div></div>'}
+
+function perm(){try{Notification.requestPermission().then(function(x){toast(x=='granted'?'تم تفعيل الإشعارات ✅':'لم يتم السماح بالإشعارات')})}catch(e){toast('متصفحك لا يدعم الإشعارات، سيظهر التنبيه داخل الصفحة')}}
+function share(){var u=location.href;try{if(navigator.share)return navigator.share({title:'Rahoulti',url:u});navigator.clipboard.writeText(u);toast('تم نسخ الرابط 🔗')}catch(e){toast(u)}}
+
+function render(){
+  if(!S.p)return form();theme(S.p.g);var T=[['🏠','اليوم'],['🍽️','الأكل'],['💪','التمارين'],['⏰','تنبيهات']];
+  $('#app').innerHTML=[vToday,vFood,vWork,vRem][tab]()+'<nav>'+T.map(function(t,i){return'<button class="'+(i==tab?'on':'')+'" onclick="tab='+i+';render();scrollTo(0,0)"><span>'+t[0]+'</span>'+t[1]+'</button>'}).join('')+'</nav>'}
+render();
+</script>
+</body>
+</html>
